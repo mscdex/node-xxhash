@@ -4,9 +4,9 @@
       'target_name': 'hash',
       'include_dirs': [ 'deps/xxhash' ],
       'sources': [
-        'hash.cc',
+        'src/hash.cc',
         'deps/xxhash/xxhash.h',
-        'deps/xxhash/xxhash.cc',
+        'deps/xxhash/xxhash.c',
       ],
       'cflags': [ '-O3' ],
     },

@@ -11,46 +11,57 @@ Requirements
 * [node.js](http://nodejs.org/) -- v0.6.0 or newer
 
 
-License
-=======
-
-BSD 2-Clause
-
-
 Install
 ============
 
-npm install xxhash
+    npm install xxhash
 
 
 Examples
 ========
 
-* Hash a file using the fast method:
-```javascript
-  var xxhash = require('xxhash'),
-        fs = require('fs');
+* Hash a file in one step:
 
-  var file = fs.readFileSync('somefile'),
-        result = xxhash.fast(file, 0xCAFEBABE);
+```javascript
+var XXHash = require('xxhash'),
+    fs = require('fs');
+
+var file = fs.readFileSync('somefile'),
+    result = XXHash.hash(file, 0xCAFEBABE);
 ```
 
-* Hash a file using the strong method:
-```javascript
-  var xxhash = require('xxhash'),
-        fs = require('fs');
+* Hash a file in steps:
 
-  var file = fs.readFileSync('somefile'),
-        result = xxhash.strong(file, 0xCAFEBABE);
+```javascript
+var XXHash = require('xxhash'),
+    fs = require('fs');
+
+var hasher = new XXHash(0xCAFEBABE);
+
+fs.createReadStream('somefile')
+  .on('data', function(data) {
+    hasher.update(data);
+  })
+  .on('end', function() {
+    console.log('Hash value = ' + hasher.digest());
+  });
 ```
 
 
 API
 ===
 
-Static Methods
+XXHash Static Methods
+---------------------
+
+* **hash**(< _Buffer_ >data, < _integer_ >seed) - _integer_ - Performs a single/one-time hash of `data` with the given `seed`. The resulting hash is returned.
+
+
+XXHash Methods
 --------------
 
-* **fast**(<_Buffer_>data, <_Integer_>seed) - <_Integer_> - Hashes _data_ with the given _seed_ using the fast version of xxhash. The resulting hash is returned.
+* **(constructor)**(< _Integer_ >seed) - Create and return a new Hash instance that uses the given `seed`.
 
-* **strong**(<_Buffer_>data, <_Integer_>seed) - <_Integer_> - Hashes _data_ with the given _seed_ using the strong version of xxhash. The resulting hash is returned.
+* **update**(< _Buffer_ >data) - _(void)_ - Update the hash using `data`. Note: the length of `data` must be a positive signed integer (e.g. 0 to 2,147,483,647 bytes).
+
+* **digest**()  - _integer_ - Completes the hashing and returns the resulting integer hash. Note: hash object can not be used after digest() method been called.
