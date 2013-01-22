@@ -1,5 +1,5 @@
 { "name": "xxhash",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Brian White <mscdex@mscdex.net>",
   "description": "An xxhash binding for node.js",
   "main": "./lib/xxhash",
