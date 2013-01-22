@@ -1,5 +1,6 @@
 #include <node.h>
 #include <node_buffer.h>
+#include <stdlib.h>
 
 #include "xxhash.h"
 
