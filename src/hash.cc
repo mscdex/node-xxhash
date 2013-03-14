@@ -4,12 +4,11 @@
 
 #include "xxhash.h"
 
-using namespace node;
 using namespace v8;
 
 static Persistent<FunctionTemplate> constructor;
 
-class Hash : public ObjectWrap {
+class Hash : public node::ObjectWrap {
   public:
     void* state;
 
@@ -49,7 +48,7 @@ class Hash : public ObjectWrap {
       HandleScope scope;
       Hash* obj = ObjectWrap::Unwrap<Hash>(args.This());
 
-      if (!Buffer::HasInstance(args[0])) {
+      if (!node::Buffer::HasInstance(args[0])) {
         return ThrowException(Exception::TypeError(
             String::New("data argument must be a Buffer"))
         );
@@ -57,13 +56,14 @@ class Hash : public ObjectWrap {
 
       Local<Object> data = args[0]->ToObject();
 
-      if (Buffer::Length(data) > 2147483647) {
+      if (node::Buffer::Length(data) > 2147483647) {
         return ThrowException(Exception::TypeError(
             String::New("data length must be 0 <= n <= 2147483647"))
         );
       }
 
-      XXH32_feed(obj->state, Buffer::Data(data), Buffer::Length(data));
+      XXH32_feed(obj->state, node::Buffer::Data(data),
+                 node::Buffer::Length(data));
 
       return scope.Close(Undefined());
     }
@@ -89,7 +89,7 @@ class Hash : public ObjectWrap {
         );
       }
 
-      if (!Buffer::HasInstance(args[0])) {
+      if (!node::Buffer::HasInstance(args[0])) {
         return ThrowException(Exception::TypeError(
             String::New("data argument must be a Buffer"))
         );
@@ -101,14 +101,14 @@ class Hash : public ObjectWrap {
 
       Local<Object> data = args[0]->ToObject();
 
-      if (Buffer::Length(data) > 2147483647) {
+      if (node::Buffer::Length(data) > 2147483647) {
         return ThrowException(Exception::TypeError(
             String::New("data length must be 0 <= n <= 2147483647"))
         );
       }
 
-      unsigned int result = XXH32(Buffer::Data(data),
-                                  Buffer::Length(data),
+      unsigned int result = XXH32(node::Buffer::Data(data),
+                                  node::Buffer::Length(data),
                                   args[1]->Uint32Value());
 
       return scope.Close(Integer::NewFromUnsigned(result));
@@ -135,9 +135,11 @@ class Hash : public ObjectWrap {
     }
 };
 
-void Init(Handle<Object> target) {
-  HandleScope scope;
-  Hash::Initialize(target);
-}
+extern "C" {
+  void Init(Handle<Object> target) {
+    HandleScope scope;
+    Hash::Initialize(target);
+  }
 
-NODE_MODULE(hash, Init)
+  NODE_MODULE(hash, Init);
+}
