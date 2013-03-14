@@ -54,7 +54,11 @@ class Hash : public node::ObjectWrap {
         );
       }
 
+#if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION < 10
       Local<Object> data = args[0]->ToObject();
+#else
+      Local<Value> data = args[0];
+#endif
 
       if (node::Buffer::Length(data) > 2147483647) {
         return ThrowException(Exception::TypeError(
@@ -99,7 +103,11 @@ class Hash : public node::ObjectWrap {
         );
       }
 
+#if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION < 10
       Local<Object> data = args[0]->ToObject();
+#else
+      Local<Value> data = args[0];
+#endif
 
       if (node::Buffer::Length(data) > 2147483647) {
         return ThrowException(Exception::TypeError(
