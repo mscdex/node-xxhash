@@ -170,19 +170,22 @@ unsigned int XXH32(const void* input, int len, unsigned int seed)
 	}
 
 	h32 += (unsigned int) len;
-	
-	while (p<=bEnd-4)
-	{
-		h32 += XXH_LE32(p) * PRIME32_3;
-		h32 = XXH_rotl32(h32, 17) * PRIME32_4 ;
-		p+=4;
-	}
 
-	while (p<bEnd)
+	if (p)
 	{
-		h32 += (*p) * PRIME32_5;
-		h32 = XXH_rotl32(h32, 11) * PRIME32_1 ;
-		p++;
+		while (p<=bEnd-4)
+		{
+			h32 += XXH_LE32(p) * PRIME32_3;
+			h32 = XXH_rotl32(h32, 17) * PRIME32_4 ;
+			p+=4;
+		}
+
+		while (p<bEnd)
+		{
+			h32 += (*p) * PRIME32_5;
+			h32 = XXH_rotl32(h32, 11) * PRIME32_1 ;
+			p++;
+		}
 	}
 
 	h32 ^= h32 >> 15;
@@ -235,8 +238,13 @@ int   XXH32_feed (void* state_in, const void* input, int len)
 	const unsigned char* p = (const unsigned char*)input;
 	const unsigned char* const bEnd = p + len;
 
+	if (!p)
+	{
+		return 0;
+	}
+
 	state->total_len += len;
-	
+
 	if (state->memsize + len < 16)   // fill in tmp buffer
 	{
 		memcpy(state->memory + state->memsize, input, len);
@@ -250,7 +258,7 @@ int   XXH32_feed (void* state_in, const void* input, int len)
 		{
 			const unsigned int* p32 = (const unsigned int*)state->memory;
 			state->v1 += XXH_LE32(p32) * PRIME32_2; state->v1 = XXH_rotl32(state->v1, 13); state->v1 *= PRIME32_1; p32++;
-			state->v2 += XXH_LE32(p32) * PRIME32_2; state->v2 = XXH_rotl32(state->v2, 13); state->v2 *= PRIME32_1; p32++; 
+			state->v2 += XXH_LE32(p32) * PRIME32_2; state->v2 = XXH_rotl32(state->v2, 13); state->v2 *= PRIME32_1; p32++;
 			state->v3 += XXH_LE32(p32) * PRIME32_2; state->v3 = XXH_rotl32(state->v3, 13); state->v3 *= PRIME32_1; p32++;
 			state->v4 += XXH_LE32(p32) * PRIME32_2; state->v4 = XXH_rotl32(state->v4, 13); state->v4 *= PRIME32_1; p32++;
 		}
@@ -271,7 +279,7 @@ int   XXH32_feed (void* state_in, const void* input, int len)
 			v2 += XXH_LE32(p) * PRIME32_2; v2 = XXH_rotl32(v2, 13); v2 *= PRIME32_1; p+=4;
 			v3 += XXH_LE32(p) * PRIME32_2; v3 = XXH_rotl32(v3, 13); v3 *= PRIME32_1; p+=4;
 			v4 += XXH_LE32(p) * PRIME32_2; v4 = XXH_rotl32(v4, 13); v4 *= PRIME32_1; p+=4;
-		}  
+		}
 
 		state->v1 = v1;
 		state->v2 = v2;
@@ -307,7 +315,7 @@ unsigned int XXH32_getIntermediateResult (void* state_in)
 	}
 
 	h32 += (unsigned int) state->total_len;
-	
+
 	while (p<=bEnd-4)
 	{
 		h32 += XXH_LE32(p) * PRIME32_3;
@@ -334,7 +342,7 @@ unsigned int XXH32_getIntermediateResult (void* state_in)
 
 unsigned int XXH32_result (void* state_in)
 {
-    unsigned int h32 = XXH32_getIntermediateResult(state_in);
+	unsigned int h32 = XXH32_getIntermediateResult(state_in);
 
 	free(state_in);
 
