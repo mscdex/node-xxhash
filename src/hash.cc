@@ -60,14 +60,14 @@ class Hash : public node::ObjectWrap {
       Local<Value> data = args[0];
 #endif
 
-      if (node::Buffer::Length(data) > 2147483647) {
+      size_t buflen = node::Buffer::Length(data);
+      if (buflen > 2147483647 || buflen == 0) {
         return ThrowException(Exception::TypeError(
-            String::New("data length must be 0 <= n <= 2147483647"))
+            String::New("data length must be 0 < n <= 2147483647"))
         );
       }
 
-      XXH32_feed(obj->state, node::Buffer::Data(data),
-                 node::Buffer::Length(data));
+      XXH32_feed(obj->state, node::Buffer::Data(data), buflen);
 
       return scope.Close(Undefined());
     }
@@ -109,14 +109,15 @@ class Hash : public node::ObjectWrap {
       Local<Value> data = args[0];
 #endif
 
-      if (node::Buffer::Length(data) > 2147483647) {
+      size_t buflen = node::Buffer::Length(data);
+      if (buflen > 2147483647 || buflen == 0) {
         return ThrowException(Exception::TypeError(
-            String::New("data length must be 0 <= n <= 2147483647"))
+            String::New("data length must be 0 < n <= 2147483647"))
         );
       }
 
       unsigned int result = XXH32(node::Buffer::Data(data),
-                                  node::Buffer::Length(data),
+                                  buflen,
                                   args[1]->Uint32Value());
 
       return scope.Close(Integer::NewFromUnsigned(result));
