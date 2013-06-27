@@ -8,7 +8,7 @@
         'deps/xxhash/xxhash.h',
         'deps/xxhash/xxhash.c',
       ],
-      'cflags': [ '-O3' ],
+      'cflags': [ '-O2' ],
     },
   ],
 }
