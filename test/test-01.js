@@ -31,7 +31,7 @@ describe('XXHash', function()
 		function shouldThrow()
 		{
 			var hasher = new XXHash(seed);
-			// hasher.update('foo');
+			hasher.update('foo');
 		}
 
 		shouldThrow.must.throw(/data argument must be a Buffer/);

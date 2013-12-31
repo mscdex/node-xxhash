@@ -9,5 +9,5 @@
   "repository": { "type": "git", "url": "https://github.com/mscdex/node-xxhash.git" },
   "scripts": { "test": "mocha -R spec test/test*.js" },
   "dependencies": { "nan": "~0.7.0" },
-  "devDependencies": { "mocha": "*", "must": "*", "node-gyp": "*" }
+  "devDependencies": { "mocha": "*", "must": "*" }
 }

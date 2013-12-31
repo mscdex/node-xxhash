@@ -47,6 +47,7 @@ class Hash : public node::ObjectWrap {
 
       if (!node::Buffer::HasInstance(args[0])) {
         ThrowException(Exception::TypeError(String::New("data argument must be a Buffer")));
+        NanReturnUndefined();
       }
 
 #if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION < 10
@@ -58,6 +59,7 @@ class Hash : public node::ObjectWrap {
       size_t buflen = node::Buffer::Length(data);
       if (buflen > 2147483647 || buflen == 0) {
         ThrowException(Exception::TypeError(String::New("data length must be 0 < n <= 2147483647")));
+        NanReturnUndefined();
       }
 
       XXH32_feed(obj->state, node::Buffer::Data(data), buflen);
