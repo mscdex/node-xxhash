@@ -2,6 +2,7 @@
 #include <node_buffer.h>
 #include <stdlib.h>
 
+#include "nan.h"
 #include "xxhash.h"
 
 using namespace v8;
@@ -23,19 +24,15 @@ class Hash : public node::ObjectWrap {
       }
     }
 
-    static Handle<Value> New(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(New) {
+      NanScope();
 
       if (!args.IsConstructCall()) {
-        return ThrowException(Exception::Error(
-            String::New("Use `new` to create instances of this object."))
-        );
+        ThrowException(Exception::Error(String::New("Use `new` to create instances of this object.")));
       }
 
       if (args.Length() == 0 || !args[0]->IsUint32()) {
-        return ThrowException(Exception::TypeError(
-            String::New("Expected unsigned integer seed argument"))
-        );
+        ThrowException(Exception::TypeError(String::New("Expected unsigned integer seed argument")));
       }
 
       Hash* obj = new Hash(args[0]->Uint32Value());
@@ -44,14 +41,12 @@ class Hash : public node::ObjectWrap {
       return args.This();
     }
 
-    static Handle<Value> Update(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(Update) {
+      NanScope();
       Hash* obj = ObjectWrap::Unwrap<Hash>(args.This());
 
       if (!node::Buffer::HasInstance(args[0])) {
-        return ThrowException(Exception::TypeError(
-            String::New("data argument must be a Buffer"))
-        );
+        ThrowException(Exception::TypeError(String::New("data argument must be a Buffer")));
       }
 
 #if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION < 10
@@ -62,18 +57,16 @@ class Hash : public node::ObjectWrap {
 
       size_t buflen = node::Buffer::Length(data);
       if (buflen > 2147483647 || buflen == 0) {
-        return ThrowException(Exception::TypeError(
-            String::New("data length must be 0 < n <= 2147483647"))
-        );
+        ThrowException(Exception::TypeError(String::New("data length must be 0 < n <= 2147483647")));
       }
 
       XXH32_feed(obj->state, node::Buffer::Data(data), buflen);
 
-      return scope.Close(Undefined());
+      NanReturnValue(Undefined());
     }
 
-    static Handle<Value> Digest(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(Digest) {
+      NanScope();
       Hash* obj = ObjectWrap::Unwrap<Hash>(args.This());
 
       unsigned int result = XXH32_result(obj->state);
@@ -81,26 +74,20 @@ class Hash : public node::ObjectWrap {
       // XXH32_result() frees the state already
       obj->state = NULL;
 
-      return scope.Close(Integer::NewFromUnsigned(result));
+      NanReturnValue(Integer::NewFromUnsigned(result));
     }
 
-    static Handle<Value> StaticHash(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(StaticHash) {
+      NanScope();
 
       if (args.Length() < 2) {
-        return ThrowException(Exception::Error(
-            String::New("Expected data and seed arguments"))
-        );
+        ThrowException(Exception::Error(String::New("Expected data and seed arguments")));
       }
 
       if (!node::Buffer::HasInstance(args[0])) {
-        return ThrowException(Exception::TypeError(
-            String::New("data argument must be a Buffer"))
-        );
+        ThrowException(Exception::TypeError(String::New("data argument must be a Buffer")));
       } else if (!args[1]->IsUint32()) {
-        return ThrowException(Exception::TypeError(
-            String::New("seed argument must be an unsigned integer"))
-        );
+        ThrowException(Exception::TypeError(String::New("seed argument must be an unsigned integer")));
       }
 
 #if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION < 10
@@ -111,24 +98,22 @@ class Hash : public node::ObjectWrap {
 
       size_t buflen = node::Buffer::Length(data);
       if (buflen > 2147483647 || buflen == 0) {
-        return ThrowException(Exception::TypeError(
-            String::New("data length must be 0 < n <= 2147483647"))
-        );
+        ThrowException(Exception::TypeError(String::New("data length must be 0 < n <= 2147483647")));
       }
 
       unsigned int result = XXH32(node::Buffer::Data(data),
                                   buflen,
                                   args[1]->Uint32Value());
 
-      return scope.Close(Integer::NewFromUnsigned(result));
+      NanReturnValue(Integer::NewFromUnsigned(result));
     }
 
 
     static void Initialize(Handle<Object> target) {
-      HandleScope scope;
+      NanScope();
 
       Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-      Local<String> name = String::NewSymbol("XXHash");
+      Local<String> name = NanSymbol("XXHash");
 
       constructor = Persistent<FunctionTemplate>::New(tpl);
       constructor->InstanceTemplate()->SetInternalFieldCount(1);
@@ -137,7 +122,7 @@ class Hash : public node::ObjectWrap {
       NODE_SET_PROTOTYPE_METHOD(constructor, "update", Update);
       NODE_SET_PROTOTYPE_METHOD(constructor, "digest", Digest);
 
-      constructor->Set(String::NewSymbol("hash"),
+      constructor->Set(NanSymbol("hash"),
                        FunctionTemplate::New(StaticHash)->GetFunction());
 
       target->Set(name, constructor->GetFunction());
@@ -146,7 +131,7 @@ class Hash : public node::ObjectWrap {
 
 extern "C" {
   void Init(Handle<Object> target) {
-    HandleScope scope;
+    NanScope();
     Hash::Initialize(target);
   }
 

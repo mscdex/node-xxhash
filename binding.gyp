@@ -2,7 +2,7 @@
   'targets': [
     {
       'target_name': 'hash',
-      'include_dirs': [ 'deps/xxhash' ],
+      'include_dirs': [ 'deps/xxhash', "<!(node -e \"require('nan')\")" ],
       'sources': [
         'src/hash.cc',
         'deps/xxhash/xxhash.h',
