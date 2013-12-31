@@ -38,7 +38,7 @@ class Hash : public node::ObjectWrap {
       Hash* obj = new Hash(args[0]->Uint32Value());
       obj->Wrap(args.This());
 
-      return args.This();
+      NanReturnValue(args.This());
     }
 
     static NAN_METHOD(Update) {
