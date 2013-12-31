@@ -45,6 +45,11 @@ class Hash : public node::ObjectWrap {
       NanScope();
       Hash* obj = ObjectWrap::Unwrap<Hash>(args.This());
 
+      if (!obj->state) {
+        ThrowException(Exception::TypeError(String::New("cannot call update after digest")));
+        NanReturnUndefined();
+      }
+
       if (!node::Buffer::HasInstance(args[0])) {
         ThrowException(Exception::TypeError(String::New("data argument must be a Buffer")));
         NanReturnUndefined();

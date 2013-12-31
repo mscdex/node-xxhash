@@ -75,18 +75,16 @@ describe('XXHash', function()
 			hashHelper(inputs[i]).must.equal(results[i]);
 	});
 
-	it('update() cannot be called after digest() has been called' /*, function()
+	it('update() cannot be called after digest() has been called', function()
 	{
-		// Original bindings just SIGSEGV here. Would be better to detect & throw instead.
-
 		function shouldThrow()
 		{
 			var hasher = new XXHash(seed);
 			hasher.update(new Buffer('foo'));
 			hasher.digest();
-			// hasher.update(new Buffer('bar'));
+			hasher.update(new Buffer('bar'));
 		}
 
-		shouldThrow.must.throw();
-	} */);
+		shouldThrow.must.throw(/cannot call update after digest/);
+	});
 })
