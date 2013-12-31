@@ -7,7 +7,7 @@
 
 using namespace v8;
 
-static Persistent<FunctionTemplate> constructor;
+static v8::Persistent<v8::FunctionTemplate> constructor;
 
 class Hash : public node::ObjectWrap {
   public:
@@ -24,7 +24,7 @@ class Hash : public node::ObjectWrap {
       }
     }
 
-    static NAN_METHOD(New) {
+    static NAN_METHOD(NewInstance) {
       NanScope();
 
       if (!args.IsConstructCall()) {
@@ -101,9 +101,7 @@ class Hash : public node::ObjectWrap {
         ThrowException(Exception::TypeError(String::New("data length must be 0 < n <= 2147483647")));
       }
 
-      unsigned int result = XXH32(node::Buffer::Data(data),
-                                  buflen,
-                                  args[1]->Uint32Value());
+      unsigned int result = XXH32(node::Buffer::Data(data), buflen, args[1]->Uint32Value());
 
       NanReturnValue(Integer::NewFromUnsigned(result));
     }
@@ -112,20 +110,19 @@ class Hash : public node::ObjectWrap {
     static void Initialize(Handle<Object> target) {
       NanScope();
 
-      Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
+      v8::Local<v8::FunctionTemplate> tpl = v8::FunctionTemplate::New(NewInstance);
       Local<String> name = NanSymbol("XXHash");
 
-      constructor = Persistent<FunctionTemplate>::New(tpl);
-      constructor->InstanceTemplate()->SetInternalFieldCount(1);
-      constructor->SetClassName(name);
+      NanAssignPersistent(v8::FunctionTemplate, constructor, tpl);
+      tpl->SetClassName(name);
+      tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-      NODE_SET_PROTOTYPE_METHOD(constructor, "update", Update);
-      NODE_SET_PROTOTYPE_METHOD(constructor, "digest", Digest);
+      NODE_SET_PROTOTYPE_METHOD(tpl, "update", Update);
+      NODE_SET_PROTOTYPE_METHOD(tpl, "digest", Digest);
 
-      constructor->Set(NanSymbol("hash"),
-                       FunctionTemplate::New(StaticHash)->GetFunction());
+      tpl->Set(NanSymbol("hash"), FunctionTemplate::New(StaticHash)->GetFunction());
 
-      target->Set(name, constructor->GetFunction());
+      target->Set(name, tpl->GetFunction());
     }
 };
 
