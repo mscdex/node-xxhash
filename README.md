@@ -1,29 +1,21 @@
-
-Description
-===========
+# xxhash-nan
 
 An [xxhash](http://code.google.com/p/xxhash/) binding for [node.js](http://nodejs.org/).
 
+Forked from the [original]() to add compatibility with future versions of node via NAN.
 
-Requirements
-============
+## Installation
 
-* [node.js](http://nodejs.org/) -- v0.6.0 or newer
+You must be running node 0.10 or later.
 
+  npm install xxhash
 
-Install
-============
-
-    npm install xxhash
-
-
-Examples
-========
+## Examples
 
 * Hash a file in one step:
 
 ```javascript
-var XXHash = require('xxhash'),
+var XXHash = require('xxhash-nan'),
     fs = require('fs');
 
 var file = fs.readFileSync('somefile'),
@@ -33,7 +25,7 @@ var file = fs.readFileSync('somefile'),
 * Hash a file in steps:
 
 ```javascript
-var XXHash = require('xxhash'),
+var XXHash = require('xxhash-nan'),
     fs = require('fs');
 
 var hasher = new XXHash(0xCAFEBABE);
