@@ -6,7 +6,7 @@ An [xxhash](http://code.google.com/p/xxhash/) binding for [node.js](http://nodej
 
 ## Installation
 
-You must be running node 0.8 or later.
+You must be running node 0.8 or later. (Thanks to an npm 2.0 compatibility issue, travis tests fail on 0.8.)
 
   npm install xxhash
 
