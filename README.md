@@ -1,39 +1,31 @@
+# xxhash-nan
 
-Description
-===========
+An [xxhash](http://code.google.com/p/xxhash/) binding for [node.js](http://nodejs.org/). Forked from the [original](https://github.com/mscdex/node-xxhash) to add compatibility with future versions of node via NAN.
 
-An [xxhash](http://code.google.com/p/xxhash/) binding for [node.js](http://nodejs.org/).
+[![on npm](http://img.shields.io/npm/v/xxhash-nan.svg?style=flat)](https://www.npmjs.org/package/jthoober)  [![Tests](http://img.shields.io/travis/ceejbot/xxhash-nan.svg?style=flat)](http://travis-ci.org/ceejbot/xxhash-nan)    [![Dependencies](http://img.shields.io/david/ceejbot/xxhash-nan.svg?style=flat)](https://david-dm.org/ceejbot/xxhash-nan)
 
+## Installation
 
-Requirements
-============
+You must be running node 0.8 or later. (Thanks to an npm 2.0 compatibility issue, travis tests fail on 0.8.)
 
-* [node.js](http://nodejs.org/) -- v0.6.0 or newer
+  npm install xxhash
 
-
-Install
-============
-
-    npm install xxhash
-
-
-Examples
-========
+## Examples
 
 * Hash a file in one step:
 
 ```javascript
-var XXHash = require('xxhash'),
+var XXHash = require('xxhash-nan'),
     fs = require('fs');
 
 var file = fs.readFileSync('somefile'),
     result = XXHash.hash(file, 0xCAFEBABE);
 ```
 
-* Hash a file in steps:
+Hash a file incrementally:
 
 ```javascript
-var XXHash = require('xxhash'),
+var XXHash = require('xxhash-nan'),
     fs = require('fs');
 
 var hasher = new XXHash(0xCAFEBABE);
@@ -47,18 +39,14 @@ fs.createReadStream('somefile')
   });
 ```
 
+## API
 
-API
-===
-
-XXHash Static Methods
----------------------
+### XXHash module functions
 
 * **hash**(< _Buffer_ >data, < _integer_ >seed) - _integer_ - Performs a single/one-time hash of `data` with the given `seed`. The resulting hash is returned.
 
 
-XXHash Methods
---------------
+### XXHash Methods
 
 * **(constructor)**(< _Integer_ >seed) - Create and return a new Hash instance that uses the given `seed`.
 
