@@ -1,8 +1,8 @@
 # xxhash-nan
 
-An [xxhash](http://code.google.com/p/xxhash/) binding for [node.js](http://nodejs.org/).
+An [xxhash](http://code.google.com/p/xxhash/) binding for [node.js](http://nodejs.org/). Forked from the [original](https://github.com/mscdex/node-xxhash) to add compatibility with future versions of node via NAN.
 
-Forked from the [original]() to add compatibility with future versions of node via NAN.
+[![on npm](http://img.shields.io/npm/v/xxhash-nan.svg?style=flat)](https://www.npmjs.org/package/jthoober)  [![Tests](http://img.shields.io/travis/ceejbot/xxhash-nan.svg?style=flat)](http://travis-ci.org/ceejbot/xxhash-nan)    [![Dependencies](http://img.shields.io/david/ceejbot/xxhash-nan.svg?style=flat)](https://david-dm.org/ceejbot/xxhash-nan)
 
 ## Installation
 
@@ -22,7 +22,7 @@ var file = fs.readFileSync('somefile'),
     result = XXHash.hash(file, 0xCAFEBABE);
 ```
 
-* Hash a file in steps:
+Hash a file incrementally:
 
 ```javascript
 var XXHash = require('xxhash-nan'),

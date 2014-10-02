@@ -1,7 +1,7 @@
 {
   "name": "xxhash-nan",
   "description": "xxhash bindings for node.js, using nan for portability",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "author": "C J Silverio <ceejceej@gmail.com>",
   "bugs": {
     "url": "https://github.com/ceejbot/xxhash-nan/issues"
