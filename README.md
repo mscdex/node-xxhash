@@ -6,7 +6,7 @@ An [xxhash](http://code.google.com/p/xxhash/) binding for [node.js](http://nodej
 
 ## Installation
 
-You must be running node 0.10 or later.
+You must be running node 0.8 or later.
 
   npm install xxhash
 
@@ -39,18 +39,14 @@ fs.createReadStream('somefile')
   });
 ```
 
+## API
 
-API
-===
-
-XXHash Static Methods
----------------------
+### XXHash module functions
 
 * **hash**(< _Buffer_ >data, < _integer_ >seed) - _integer_ - Performs a single/one-time hash of `data` with the given `seed`. The resulting hash is returned.
 
 
-XXHash Methods
---------------
+### XXHash Methods
 
 * **(constructor)**(< _Integer_ >seed) - Create and return a new Hash instance that uses the given `seed`.
 

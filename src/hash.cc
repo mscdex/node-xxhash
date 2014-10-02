@@ -113,21 +113,20 @@ class Hash : public node::ObjectWrap {
       NanReturnValue(Integer::NewFromUnsigned(result));
     }
 
-
     static void Initialize(Handle<Object> target) {
       NanScope();
 
       v8::Local<v8::FunctionTemplate> tpl = v8::FunctionTemplate::New(NewInstance);
-      Local<String> name = NanSymbol("XXHash");
+      Local<String> name = NanNew<String>("XXHash");
 
-      NanAssignPersistent(v8::FunctionTemplate, constructor, tpl);
+      NanAssignPersistent(constructor, tpl);
       tpl->SetClassName(name);
       tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
       NODE_SET_PROTOTYPE_METHOD(tpl, "update", Update);
       NODE_SET_PROTOTYPE_METHOD(tpl, "digest", Digest);
 
-      tpl->Set(NanSymbol("hash"), FunctionTemplate::New(StaticHash)->GetFunction());
+      tpl->Set(NanNew<String>("hash"), FunctionTemplate::New(StaticHash)->GetFunction());
 
       target->Set(name, tpl->GetFunction());
     }
