@@ -1,5 +1,6 @@
 #include <node.h>
 #include <node_buffer.h>
+#include <nan.h>
 #include <stdlib.h>
 
 #include "xxhash.h"
@@ -10,49 +11,36 @@ static Persistent<FunctionTemplate> constructor;
 
 class Hash : public node::ObjectWrap {
   public:
-    void* state;
+    XXH32_state_t state;
 
     Hash(unsigned int seed) {
-      state = XXH32_init(seed);
+      XXH32_reset(&state, seed);
     }
 
     ~Hash() {
-      if (state) {
-        free(state);
-        state = NULL;
-      }
     }
 
-    static Handle<Value> New(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(New) {
+      NanScope();
 
-      if (!args.IsConstructCall()) {
-        return ThrowException(Exception::Error(
-            String::New("Use `new` to create instances of this object."))
-        );
-      }
+      if (!args.IsConstructCall())
+        return NanThrowError("Use `new` to create instances of this object.");
 
-      if (args.Length() == 0 || !args[0]->IsUint32()) {
-        return ThrowException(Exception::TypeError(
-            String::New("Expected unsigned integer seed argument"))
-        );
-      }
+      if (args.Length() == 0 || !args[0]->IsUint32())
+        return NanThrowTypeError("Expected unsigned integer seed argument");
 
       Hash* obj = new Hash(args[0]->Uint32Value());
       obj->Wrap(args.This());
 
-      return args.This();
+      NanReturnValue(args.This());
     }
 
-    static Handle<Value> Update(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(Update) {
+      NanScope();
       Hash* obj = ObjectWrap::Unwrap<Hash>(args.This());
 
-      if (!node::Buffer::HasInstance(args[0])) {
-        return ThrowException(Exception::TypeError(
-            String::New("data argument must be a Buffer"))
-        );
-      }
+      if (!node::Buffer::HasInstance(args[0]))
+        return NanThrowTypeError("data argument must be a Buffer");
 
 #if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION < 10
       Local<Object> data = args[0]->ToObject();
@@ -61,47 +49,33 @@ class Hash : public node::ObjectWrap {
 #endif
 
       size_t buflen = node::Buffer::Length(data);
-      if (buflen > 2147483647 || buflen == 0) {
-        return ThrowException(Exception::TypeError(
-            String::New("data length must be 0 < n <= 2147483647"))
-        );
-      }
+      /*if (buflen > 2147483647 || buflen == 0)
+        return NanThrowTypeError("data length must be 0 < n <= 2147483647");*/
 
-      XXH32_feed(obj->state, node::Buffer::Data(data), buflen);
+      XXH32_update(&obj->state, node::Buffer::Data(data), buflen);
 
-      return scope.Close(Undefined());
+      NanReturnUndefined();
     }
 
-    static Handle<Value> Digest(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(Digest) {
+      NanScope();
       Hash* obj = ObjectWrap::Unwrap<Hash>(args.This());
 
-      unsigned int result = XXH32_result(obj->state);
+      uint32_t result = XXH32_digest(&obj->state);
 
-      // XXH32_result() frees the state already
-      obj->state = NULL;
-
-      return scope.Close(Integer::NewFromUnsigned(result));
+      NanReturnValue(NanNew<Integer>(result));
     }
 
-    static Handle<Value> StaticHash(const Arguments& args) {
-      HandleScope scope;
+    static NAN_METHOD(StaticHash) {
+      NanScope();
 
-      if (args.Length() < 2) {
-        return ThrowException(Exception::Error(
-            String::New("Expected data and seed arguments"))
-        );
-      }
+      if (args.Length() < 2)
+        return NanThrowTypeError("Expected data and seed arguments");
 
-      if (!node::Buffer::HasInstance(args[0])) {
-        return ThrowException(Exception::TypeError(
-            String::New("data argument must be a Buffer"))
-        );
-      } else if (!args[1]->IsUint32()) {
-        return ThrowException(Exception::TypeError(
-            String::New("seed argument must be an unsigned integer"))
-        );
-      }
+      if (!node::Buffer::HasInstance(args[0]))
+        return NanThrowTypeError("data argument must be a Buffer");
+      else if (!args[1]->IsUint32())
+        return NanThrowTypeError("seed argument must be an unsigned integer");
 
 #if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION < 10
       Local<Object> data = args[0]->ToObject();
@@ -110,43 +84,38 @@ class Hash : public node::ObjectWrap {
 #endif
 
       size_t buflen = node::Buffer::Length(data);
-      if (buflen > 2147483647 || buflen == 0) {
-        return ThrowException(Exception::TypeError(
-            String::New("data length must be 0 < n <= 2147483647"))
-        );
-      }
+      /*if (buflen > 2147483647 || buflen == 0)
+        return NanThrowTypeError("data length must be 0 < n <= 2147483647");*/
 
-      unsigned int result = XXH32(node::Buffer::Data(data),
-                                  buflen,
-                                  args[1]->Uint32Value());
+      uint32_t result = XXH32(node::Buffer::Data(data),
+                              buflen,
+                              args[1]->Uint32Value());
 
-      return scope.Close(Integer::NewFromUnsigned(result));
+      NanReturnValue(NanNew<Integer>(result));
     }
 
 
     static void Initialize(Handle<Object> target) {
-      HandleScope scope;
+      NanScope();
 
-      Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-      Local<String> name = String::NewSymbol("XXHash");
+      Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
 
-      constructor = Persistent<FunctionTemplate>::New(tpl);
-      constructor->InstanceTemplate()->SetInternalFieldCount(1);
-      constructor->SetClassName(name);
+      NanAssignPersistent(constructor, tpl);
+      tpl->InstanceTemplate()->SetInternalFieldCount(1);
+      tpl->SetClassName(NanNew<String>("XXHash"));
 
-      NODE_SET_PROTOTYPE_METHOD(constructor, "update", Update);
-      NODE_SET_PROTOTYPE_METHOD(constructor, "digest", Digest);
+      NODE_SET_PROTOTYPE_METHOD(tpl, "update", Update);
+      NODE_SET_PROTOTYPE_METHOD(tpl, "digest", Digest);
+      tpl->Set(NanNew<String>("hash"),
+               NanNew<FunctionTemplate>(StaticHash)->GetFunction());
 
-      constructor->Set(String::NewSymbol("hash"),
-                       FunctionTemplate::New(StaticHash)->GetFunction());
-
-      target->Set(name, constructor->GetFunction());
+      target->Set(NanNew<String>("XXHash"), tpl->GetFunction());
     }
 };
 
 extern "C" {
   void Init(Handle<Object> target) {
-    HandleScope scope;
+    NanScope();
     Hash::Initialize(target);
   }
 

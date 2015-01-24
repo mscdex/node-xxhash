@@ -30,7 +30,7 @@ var file = fs.readFileSync('somefile'),
     result = XXHash.hash(file, 0xCAFEBABE);
 ```
 
-* Hash a file in steps:
+* Hash a file in multiple steps:
 
 ```javascript
 var XXHash = require('xxhash'),
@@ -47,6 +47,21 @@ fs.createReadStream('somefile')
   });
 ```
 
+* Hash a file with a hash stream:
+
+```javascript
+var HashStream = require('xxhash').Stream,
+    fs = require('fs');
+
+var hasher = new HashStream(0xCAFEBABE);
+
+fs.createReadStream('somefile')
+  .pipe(hasher)
+  .on('finish', function() {
+    console.log('Hash value = ' + hasher.read());
+  });
+```
+
 
 API
 ===
@@ -55,6 +70,12 @@ XXHash Static Methods
 ---------------------
 
 * **hash**(< _Buffer_ >data, < _integer_ >seed) - _integer_ - Performs a single/one-time hash of `data` with the given `seed`. The resulting hash is returned.
+
+
+XXHash Static Properties
+------------------------
+
+* **Stream** - _DuplexStream_ - A stream constructor that takes in the seed to use. Write data to the stream and when the stream ends, the hash value is available on the readable side as an integer.
 
 
 XXHash Methods

@@ -3,6 +3,11 @@
   "author": "Brian White <mscdex@mscdex.net>",
   "description": "An xxhash binding for node.js",
   "main": "./lib/xxhash",
+  "dependencies": {
+    "nan": "~1.6.1",
+    "readable-stream": "~1.0.0"
+  },
+  "scripts": { "install": "node-gyp rebuild" },
   "engines": { "node" : ">=0.6.0" },
   "keywords": [ "hash", "xxhash", "fast", "streaming" ],
   "licenses": [ { "type": "MIT", "url": "https://raw.github.com/mscdex/node-xxhash/master/LICENSE" } ],
