@@ -7,7 +7,7 @@
 
 using namespace v8;
 
-static Persistent<FunctionTemplate> constructor;
+static Nan::Persistent<FunctionTemplate> constructor;
 
 class Hash : public node::ObjectWrap {
   public:
@@ -21,101 +21,93 @@ class Hash : public node::ObjectWrap {
     }
 
     static NAN_METHOD(New) {
-      NanScope();
+      if (!info.IsConstructCall())
+        return Nan::ThrowError("Use `new` to create instances of this object.");
 
-      if (!args.IsConstructCall())
-        return NanThrowError("Use `new` to create instances of this object.");
+      if (info.Length() == 0 || !info[0]->IsUint32())
+        return Nan::ThrowTypeError("Expected unsigned integer seed argument");
 
-      if (args.Length() == 0 || !args[0]->IsUint32())
-        return NanThrowTypeError("Expected unsigned integer seed argument");
+      Hash* obj = new Hash(info[0]->Uint32Value());
+      obj->Wrap(info.This());
 
-      Hash* obj = new Hash(args[0]->Uint32Value());
-      obj->Wrap(args.This());
-
-      NanReturnValue(args.This());
+      info.GetReturnValue().Set(info.This());
     }
 
     static NAN_METHOD(Update) {
-      NanScope();
-      Hash* obj = ObjectWrap::Unwrap<Hash>(args.This());
+      Hash* obj = ObjectWrap::Unwrap<Hash>(info.This());
 
-      if (!node::Buffer::HasInstance(args[0]))
-        return NanThrowTypeError("data argument must be a Buffer");
+      if (!node::Buffer::HasInstance(info[0]))
+        return Nan::ThrowTypeError("data argument must be a Buffer");
 
 #if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION < 10
-      Local<Object> data = args[0]->ToObject();
+      Local<Object> data = info[0]->ToObject();
 #else
-      Local<Value> data = args[0];
+      Local<Value> data = info[0];
 #endif
 
       size_t buflen = node::Buffer::Length(data);
       /*if (buflen > 2147483647 || buflen == 0)
-        return NanThrowTypeError("data length must be 0 < n <= 2147483647");*/
+        return Nan::ThrowTypeError("data length must be 0 < n <= 2147483647");*/
 
       XXH32_update(&obj->state, node::Buffer::Data(data), buflen);
 
-      NanReturnUndefined();
+      info.GetReturnValue().SetUndefined();
     }
 
     static NAN_METHOD(Digest) {
-      NanScope();
-      Hash* obj = ObjectWrap::Unwrap<Hash>(args.This());
+      Hash* obj = ObjectWrap::Unwrap<Hash>(info.This());
 
       uint32_t result = XXH32_digest(&obj->state);
 
-      NanReturnValue(NanNew<Integer>(result));
+      info.GetReturnValue().Set(Nan::New<Integer>(result));
     }
 
     static NAN_METHOD(StaticHash) {
-      NanScope();
+      if (info.Length() < 2)
+        return Nan::ThrowTypeError("Expected data and seed arguments");
 
-      if (args.Length() < 2)
-        return NanThrowTypeError("Expected data and seed arguments");
-
-      if (!node::Buffer::HasInstance(args[0]))
-        return NanThrowTypeError("data argument must be a Buffer");
-      else if (!args[1]->IsUint32())
-        return NanThrowTypeError("seed argument must be an unsigned integer");
+      if (!node::Buffer::HasInstance(info[0]))
+        return Nan::ThrowTypeError("data argument must be a Buffer");
+      else if (!info[1]->IsUint32())
+        return Nan::ThrowTypeError("seed argument must be an unsigned integer");
 
 #if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION < 10
-      Local<Object> data = args[0]->ToObject();
+      Local<Object> data = info[0]->ToObject();
 #else
-      Local<Value> data = args[0];
+      Local<Value> data = info[0];
 #endif
 
       size_t buflen = node::Buffer::Length(data);
       /*if (buflen > 2147483647 || buflen == 0)
-        return NanThrowTypeError("data length must be 0 < n <= 2147483647");*/
+        return Nan::ThrowTypeError("data length must be 0 < n <= 2147483647");*/
 
       uint32_t result = XXH32(node::Buffer::Data(data),
                               buflen,
-                              args[1]->Uint32Value());
+                              info[1]->Uint32Value());
 
-      NanReturnValue(NanNew<Integer>(result));
+      info.GetReturnValue().Set(Nan::New<Integer>(result));
     }
 
 
     static void Initialize(Handle<Object> target) {
-      NanScope();
+      Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
 
-      Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(New);
-
-      NanAssignPersistent(constructor, tpl);
+      constructor.Reset(tpl);
       tpl->InstanceTemplate()->SetInternalFieldCount(1);
-      tpl->SetClassName(NanNew<String>("XXHash"));
+      tpl->SetClassName(Nan::New<String>("XXHash").ToLocalChecked());
 
-      NODE_SET_PROTOTYPE_METHOD(tpl, "update", Update);
-      NODE_SET_PROTOTYPE_METHOD(tpl, "digest", Digest);
-      tpl->Set(NanNew<String>("hash"),
-               NanNew<FunctionTemplate>(StaticHash)->GetFunction());
+      Nan::SetPrototypeMethod(tpl, "update", Update);
+      Nan::SetPrototypeMethod(tpl, "digest", Digest);
 
-      target->Set(NanNew<String>("XXHash"), tpl->GetFunction());
+      tpl->Set(Nan::New<String>("hash").ToLocalChecked(),
+               Nan::New<FunctionTemplate>(StaticHash)->GetFunction());
+      target->Set(Nan::New<String>("XXHash").ToLocalChecked(),
+               tpl->GetFunction());
     }
 };
 
 extern "C" {
   void Init(Handle<Object> target) {
-    NanScope();
     Hash::Initialize(target);
   }
 

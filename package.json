@@ -4,7 +4,7 @@
   "description": "An xxhash binding for node.js",
   "main": "./lib/xxhash",
   "dependencies": {
-    "nan": "^1.8.4",
+    "nan": "^2.0.9",
     "readable-stream": "~1.0.0"
   },
   "scripts": { "install": "node-gyp rebuild" },
