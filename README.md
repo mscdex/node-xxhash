@@ -2,7 +2,7 @@
 Description
 ===========
 
-An [xxhash](http://code.google.com/p/xxhash/) binding for [node.js](http://nodejs.org/).
+An [xxhash](https://github.com/Cyan4973/xxHash) binding for [node.js](http://nodejs.org/).
 
 
 Requirements
