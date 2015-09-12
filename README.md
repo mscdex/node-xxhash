@@ -8,7 +8,7 @@ An [xxhash](https://github.com/Cyan4973/xxHash) binding for [node.js](http://nod
 Requirements
 ============
 
-* [node.js](http://nodejs.org/) -- v0.6.0 or newer
+* [node.js](http://nodejs.org/) -- v0.10.0 or newer
 
 
 Install
