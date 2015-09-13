@@ -69,20 +69,24 @@ API
 XXHash Static Methods
 ---------------------
 
-* **hash**(< _Buffer_ >data, < _integer_ >seed) - _integer_ - Performs a single/one-time hash of `data` with the given `seed`. The resulting hash is returned.
+* **hash**(< _Buffer_ >data, < _mixed_ >seed[, < _mixed_ >encbuf]) - _mixed_ - Performs a single/one-time hash of `data` with the given `seed`. `seed` can be an unsigned integer or a Buffer containing (1 <= n <= 4) bytes to use for the seed. The resulting hash is returned. The format of the hash depends on the value of `encbuf`. If `encbuf` is a string and one of: `buffer`, `hex`, `base64`, or `binary`, then the hash value will be encoded in the appropriate format. If `encbuf` is a _Buffer_ of at least 4 bytes, then the hash value will be written to `encbuf` and `encbuf` will be returned. Otherwise, if `encbuf` is not supplied, then the hash will be an unsigned integer.
+
+* **hash64**(< _Buffer_ >data, < _mixed_ >seed[, < _mixed_ >encbuf]) - _mixed_ - Performs a single/one-time hash of `data` with the given `seed`. `seed` can be an unsigned integer or a Buffer containing (1 <= n <= 8) bytes to use for the seed. The resulting hash is returned. The format of the hash depends on the value of `encbuf`. If `encbuf` is a string and one of: `buffer`, `hex`, `base64`, or `binary`, then the hash value will be encoded in the appropriate format. If `encbuf` is a _Buffer_ of at least 8 bytes, then the hash value will be written to `encbuf` and `encbuf` will be returned. The default value for `encbuf` is `'buffer'`.
 
 
 XXHash Static Properties
 ------------------------
 
-* **Stream** - _DuplexStream_ - A stream constructor that takes in the seed to use. Write data to the stream and when the stream ends, the hash value is available on the readable side as an integer.
+* **Stream(< _mixed_ >seed[, < _integer_ >bits][, < _mixed_ >encbuf])** - _DuplexStream_ - A stream constructor that takes in the `seed` to use. Write data to the stream and when the stream ends, a `bits`-bit (32 or 64) hash value (format determined by `encbuf`) is available on the readable side. The values for `seed` and `encbuf` are described above in `hash()`.
+
+* **XXHash64(< _mixed_ >seed)** - This is the 64-bit Hash constructor. It is only needed if you want to use the old streaming interface (`update()`/`digest()`) instead of the streams2 interface described above.
 
 
 XXHash Methods
 --------------
 
-* **(constructor)**(< _Integer_ >seed) - Create and return a new Hash instance that uses the given `seed`.
+* **(constructor)**(< _mixed_ >seed) - Creates and returns a new 32-bit Hash instance with the given `seed`. The values for `seed` are described above in `hash()`.
 
-* **update**(< _Buffer_ >data) - _(void)_ - Update the hash using `data`. Note: the length of `data` must be a positive signed integer (e.g. 0 to 2,147,483,647 bytes).
+* **update**(< _Buffer_ >data) - _(void)_ - Update the hash using `data`.
 
-* **digest**()  - _integer_ - Completes the hashing and returns the resulting integer hash. Note: hash object can not be used after digest() method been called.
+* **digest**([< _mixed_ >encbuf])  - _mixed_ - The values for `encbuf` and the resulting hash value format is described in `hash()`.
