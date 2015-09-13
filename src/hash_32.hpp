@@ -16,9 +16,15 @@ class Hash32 : public node::ObjectWrap {
     }
 
     static Local<Value> convert_result(uint32_t result, node::encoding enc) {
-      return Nan::Encode(static_cast<const void*>(&result),
-                         sizeof(uint32_t),
-                         static_cast<Nan::Encoding>(enc));
+      // Use node::Encode() directly instead of Nan::Encode() because of missing
+      // optimizations in Nan::Encode() for node v0.11+
+      return node::Encode(
+#if NODE_MAJOR_VERSION > 0 || NODE_MINOR_VERSION > 10
+                          Isolate::GetCurrent(),
+#endif
+                          reinterpret_cast<const char*>(&result),
+                          sizeof(uint32_t),
+                          enc);
     }
 
     static Local<Value> convert_result(uint32_t result, Local<Value> enc_val) {

@@ -19,10 +19,10 @@ class Hash64 : public node::ObjectWrap {
       // Use node::Encode() directly instead of Nan::Encode() because of missing
       // optimizations in Nan::Encode() for node v0.11+
       return node::Encode(
-#if NODE_MAJOR_VERSION == 0 && NODE_MINOR_VERSION > 10
+#if NODE_MAJOR_VERSION > 0 || NODE_MINOR_VERSION > 10
                           Isolate::GetCurrent(),
 #endif
-                          static_cast<const void*>(&result),
+                          reinterpret_cast<const char*>(&result),
                           sizeof(uint64_t),
                           enc);
     }
