@@ -13,7 +13,6 @@ environment:
 # Install scripts. (runs after repo cloning)
 install:
   # Get the latest stable version of Node/io.js
-  #- ps: Update-NodeJsInstallation (Get-NodeJsLatestBuild $env:nodejs_version)
   - ps: Install-Product node $env:nodejs_version
   # Fix iojs alias
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/fix-iojs-node-alias.ps1'))
