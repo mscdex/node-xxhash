@@ -153,9 +153,7 @@ class Hash32 : public node::ObjectWrap {
 
       Nan::SetPrototypeMethod(tpl, "update", Update);
       Nan::SetPrototypeMethod(tpl, "digest", Digest);
-
-      tpl->Set(Nan::New<String>("hash").ToLocalChecked(),
-               Nan::New<FunctionTemplate>(StaticHash)->GetFunction());
+      Nan::SetMethod(tpl, "hash", StaticHash);
       target->Set(name, tpl->GetFunction());
 
       constructor_32.Reset(tpl);
