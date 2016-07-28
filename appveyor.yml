@@ -15,6 +15,7 @@ install:
   # Typical npm stuff.
   - IF %nodejs_version% LSS 1 npm -g install npm
   - IF %nodejs_version% LSS 1 set PATH=%APPDATA%\npm;%PATH%
+  - set CL=-DDELAYIMP_INSECURE_WRITABLE_HOOKS
   - npm install
 
 # Post-install test scripts.
