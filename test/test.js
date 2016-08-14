@@ -14,16 +14,16 @@ var input = new Buffer('hello');
       assert.strictEqual(hash, 2717969635);
     } else {
       assert(Buffer.isBuffer(hash));
-      assert.strictEqual(hash.toString('hex'), 'cd6d9204aaad5b0c');
+      assert.strictEqual(hash.toString('hex'), '0c5badaa04926dcd');
     }
   },
   // Non-streaming hashing, custom encoding
   function(Hash, bits) {
     var hash = Hash.hash(input, SEED, 'hex');
     if (bits === 32) {
-      assert.strictEqual(hash, 'e3ec00a2');
+      assert.strictEqual(hash, 'a200ece3');
     } else {
-      assert.strictEqual(hash, 'cd6d9204aaad5b0c');
+      assert.strictEqual(hash, '0c5badaa04926dcd');
     }
   },
   // Streaming hashing
@@ -36,7 +36,7 @@ var input = new Buffer('hello');
       assert.strictEqual(hash, 2717969635);
     } else {
       assert(Buffer.isBuffer(hash));
-      assert.strictEqual(hash.toString('hex'), 'cd6d9204aaad5b0c');
+      assert.strictEqual(hash.toString('hex'), '0c5badaa04926dcd');
     }
   },
   // Streaming hashing, custom encoding
@@ -46,9 +46,9 @@ var input = new Buffer('hello');
     hash.update(input.slice(2));
     hash = hash.digest('hex');
     if (bits === 32) {
-      assert.strictEqual(hash, 'e3ec00a2');
+      assert.strictEqual(hash, 'a200ece3');
     } else {
-      assert.strictEqual(hash, 'cd6d9204aaad5b0c');
+      assert.strictEqual(hash, '0c5badaa04926dcd');
     }
   },
   // Streaming (streams2+) hashing
@@ -61,7 +61,7 @@ var input = new Buffer('hello');
       assert.strictEqual(hash, 2717969635);
     } else {
       assert(Buffer.isBuffer(hash));
-      assert.strictEqual(hash.toString('hex'), 'cd6d9204aaad5b0c');
+      assert.strictEqual(hash.toString('hex'), '0c5badaa04926dcd');
     }
   },
   // Streaming (streams2+) hashing, custom encoding
@@ -71,9 +71,9 @@ var input = new Buffer('hello');
     hash.end(input.slice(2));
     hash = hash.read();
     if (bits === 32) {
-      assert.strictEqual(hash, 'e3ec00a2');
+      assert.strictEqual(hash, 'a200ece3');
     } else {
-      assert.strictEqual(hash, 'cd6d9204aaad5b0c');
+      assert.strictEqual(hash, '0c5badaa04926dcd');
     }
   },
 ].forEach(function(t) {
