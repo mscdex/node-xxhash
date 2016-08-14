@@ -52,26 +52,26 @@ class Hash32 : public node::ObjectWrap {
       return result_val;
     }
 
-    static uint32_t convert_seed(Local<Value> seed_val) {
+    static uint32_t convert_seed(Local<Value> seed_val, bool &did_throw) {
       if (seed_val->IsUint32())
         return seed_val->Uint32Value();
       else if (node::Buffer::HasInstance(seed_val)) {
-        char* seed_buf = node::Buffer::Data(seed_val);
+        unsigned char* seed_buf = (unsigned char*)node::Buffer::Data(seed_val);
         size_t seed_buf_len = node::Buffer::Length(seed_val);
         uint8_t nb = (seed_buf_len > 4 ? 4 : seed_buf_len);
         if (nb == 0) {
-          seed_val.Clear();
+          did_throw = true;
           Nan::ThrowTypeError("seed Buffer must not be empty");
           return 0;
         }
         uint32_t seed = 0;
         for (uint8_t i = 0; i < nb; ++i) {
           seed <<= 8;
-          seed += seed_buf[i];
+          seed |= seed_buf[i];
         }
         return seed;
       }
-      seed_val.Clear();
+      did_throw = true;
       Nan::ThrowTypeError("invalid seed argument");
       return 0;
     }
@@ -85,9 +85,10 @@ class Hash32 : public node::ObjectWrap {
       else if (info.Length() == 0)
         return Nan::ThrowTypeError("Missing seed argument");
 
-      uint32_t seed = convert_seed(info[0]);
-      if (seed == 0 && info[0].IsEmpty())
-        return info.GetReturnValue().SetUndefined();
+      bool did_throw = false;
+      uint32_t seed = convert_seed(info[0], did_throw);
+      if (did_throw)
+        return;
 
       Hash32* obj = new Hash32(seed);
       obj->Wrap(info.This());
@@ -127,9 +128,10 @@ class Hash32 : public node::ObjectWrap {
       else if (!node::Buffer::HasInstance(info[0]))
         return Nan::ThrowTypeError("data argument must be a Buffer");
 
-      uint32_t seed = convert_seed(info[1]);
-      if (seed == 0 && info[1].IsEmpty())
-        return info.GetReturnValue().SetUndefined();
+      bool did_throw = false;
+      uint32_t seed = convert_seed(info[1], did_throw);
+      if (did_throw)
+        return;
 
       Local<Value> data = info[0];
 
