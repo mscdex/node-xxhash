@@ -18,11 +18,13 @@ class Hash32 : public node::ObjectWrap {
     static Local<Value> convert_result(uint32_t result, node::encoding enc) {
       // Use node::Encode() directly instead of Nan::Encode() because of missing
       // optimizations in Nan::Encode() for node v0.11+
+      char result_char[4];
+      convert_result_val(result, result_char);
       return node::Encode(
 #if NODE_MAJOR_VERSION > 0 || NODE_MINOR_VERSION > 10
                           Isolate::GetCurrent(),
 #endif
-                          reinterpret_cast<const char*>(&result),
+                          result_char,
                           sizeof(uint32_t),
                           enc);
     }
@@ -34,7 +36,7 @@ class Hash32 : public node::ObjectWrap {
         result_val = enc_val;
         if (node::Buffer::Length(result_val) >= sizeof(uint32_t)) {
           char* out_buf = node::Buffer::Data(result_val);
-          *(reinterpret_cast<uint32_t*>(&out_buf[0])) = result;
+          convert_result_val(result, out_buf);
         } else
           Nan::ThrowError("Buffer argument too small");
       } else if (enc_val->IsString()) {
@@ -50,6 +52,13 @@ class Hash32 : public node::ObjectWrap {
         Nan::ThrowTypeError("argument must be a Buffer or string");
 
       return result_val;
+    }
+
+    static void convert_result_val(uint32_t val, char buf[4]) {
+      for (int ii = 0; ii < 4; ++ii) {
+        buf[3 - ii] = val & 0xff;
+        val >>= 8;
+      }
     }
 
     static uint32_t convert_seed(Local<Value> seed_val, bool &did_throw) {
