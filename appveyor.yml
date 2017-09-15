@@ -8,13 +8,14 @@ environment:
     - nodejs_version: "4"
     - nodejs_version: "6"
     - nodejs_version: "7"
+    - nodejs_version: "8"
 
 # Install scripts. (runs after repo cloning)
 install:
   # Get the latest stable version of Node
   - ps: Install-Product node $env:nodejs_version
   # Typical npm stuff.
-  - IF %nodejs_version% LSS 1 npm -g install npm
+  - IF %nodejs_version% LSS 1 npm -g install npm@1.4.4
   - IF %nodejs_version% LSS 1 set PATH=%APPDATA%\npm;%PATH%
   - set CL=-DDELAYIMP_INSECURE_WRITABLE_HOOKS
   - npm install
