@@ -5,13 +5,46 @@
 #include <node_buffer.h>
 #include <nan.h>
 
-#ifdef _MSC_VER
-# define strcasecmp _stricmp
+#define XXH_STATIC_LINKING_ONLY
+#define XXH_PRIVATE_API
+#define XXH_ACCEPT_NULL_INPUT_POINTER
+#include "xxhash.h"
+
+#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
+    defined(__DragonFly__)
+# include <sys/endian.h>
+#elif defined(__APPLE__) || defined(_WIN32)
+# define __BIG_ENDIAN 0x1000
+# define __LITTLE_ENDIAN 0x0001
+# define __BYTE_ORDER __LITTLE_ENDIAN
+#elif defined(sun) || defined(__sun) || defined(_AIX)
+# ifdef defined(sun) || defined(__sun)
+#  include <sys/isa_defs.h>
+# endif
+# define __BIG_ENDIAN 0x1000
+# define __LITTLE_ENDIAN 0x0001
+# ifdef _BIG_ENDIAN
+#  define __BYTE_ORDER __BIG_ENDIAN
+# else
+#  define __BYTE_ORDER __LITTLE_ENDIAN
+# endif
 #else
-# include <strings.h>
+# include <endian.h>
 #endif
 
-#include "xxhash.h"
+char ToLower(char c) {
+  return c >= 'A' && c <= 'Z' ? c + ('a' - 'A') : c;
+}
+
+bool StringEqualNoCase(const char* a, const char* b) {
+  do {
+    if (*a == '\0')
+      return *b == '\0';
+    if (*b == '\0')
+      return *a == '\0';
+  } while (ToLower(*a++) == ToLower(*b++));
+  return false;
+}
 
 // As of this writing, node's ParseEncoding() is not exported, so it has been
 // copied here instead
@@ -35,6 +68,13 @@ enum node::encoding ParseEncoding(const char* encoding,
           return node::UCS2;
       }
       break;
+    case 'l':
+      // latin1
+      if (encoding[1] == 'a') {
+        if (strncmp(encoding + 2, "tin1", 4) == 0)
+          return node::BINARY;
+      }
+      break;
     case 'b':
       // binary
       if (encoding[1] == 'i') {
@@ -53,27 +93,29 @@ enum node::encoding ParseEncoding(const char* encoding,
       break;
   }
 
-  if (strcasecmp(encoding, "utf8") == 0) {
+  if (StringEqualNoCase(encoding, "utf8")) {
     return node::UTF8;
-  } else if (strcasecmp(encoding, "utf-8") == 0) {
+  } else if (StringEqualNoCase(encoding, "utf-8")) {
     return node::UTF8;
-  } else if (strcasecmp(encoding, "ascii") == 0) {
+  } else if (StringEqualNoCase(encoding, "ascii")) {
     return node::ASCII;
-  } else if (strcasecmp(encoding, "base64") == 0) {
+  } else if (StringEqualNoCase(encoding, "base64")) {
     return node::BASE64;
-  } else if (strcasecmp(encoding, "ucs2") == 0) {
+  } else if (StringEqualNoCase(encoding, "ucs2")) {
     return node::UCS2;
-  } else if (strcasecmp(encoding, "ucs-2") == 0) {
+  } else if (StringEqualNoCase(encoding, "ucs-2")) {
     return node::UCS2;
-  } else if (strcasecmp(encoding, "utf16le") == 0) {
+  } else if (StringEqualNoCase(encoding, "utf16le")) {
     return node::UCS2;
-  } else if (strcasecmp(encoding, "utf-16le") == 0) {
+  } else if (StringEqualNoCase(encoding, "utf-16le")) {
     return node::UCS2;
-  } else if (strcasecmp(encoding, "binary") == 0) {
+  } else if (StringEqualNoCase(encoding, "latin1")) {
     return node::BINARY;
-  } else if (strcasecmp(encoding, "buffer") == 0) {
+  } else if (StringEqualNoCase(encoding, "binary")) {
+    return node::BINARY;
+  } else if (StringEqualNoCase(encoding, "buffer")) {
     return node::BUFFER;
-  } else if (strcasecmp(encoding, "hex") == 0) {
+  } else if (StringEqualNoCase(encoding, "hex")) {
     return node::HEX;
   } else {
     return default_encoding;

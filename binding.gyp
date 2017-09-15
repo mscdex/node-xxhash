@@ -11,9 +11,7 @@
         'src/hash.cc',
         'src/hash_32.hpp',
         'src/hash_64.hpp',
-        'src/common.hpp',
-        'deps/xxhash/xxhash.h',
-        'deps/xxhash/xxhash.c',
+        'src/common.hpp'
       ],
       'cflags': [ '-O2' ],
     },
