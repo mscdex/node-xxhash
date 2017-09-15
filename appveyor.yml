@@ -1,6 +1,6 @@
 # http://www.appveyor.com/docs/appveyor-yml
 
-# Test against these versions of Io.js and Node.js.
+# Test against these versions of Node.js.
 environment:
   matrix:
     - nodejs_version: "0.10"
