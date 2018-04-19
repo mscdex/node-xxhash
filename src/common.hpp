@@ -7,7 +7,7 @@
 
 #define XXH_STATIC_LINKING_ONLY
 #define XXH_PRIVATE_API
-#define XXH_ACCEPT_NULL_INPUT_POINTER
+#define XXH_ACCEPT_NULL_INPUT_POINTER 1
 #include "xxhash.h"
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || \
