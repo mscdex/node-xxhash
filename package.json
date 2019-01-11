@@ -1,4 +1,5 @@
-{ "name": "xxhash",
+{
+  "name": "xxhash",
   "version": "0.2.4",
   "author": "Brian White <mscdex@mscdex.net>",
   "description": "An xxhash binding for node.js",
@@ -10,8 +11,23 @@
     "install": "node-gyp rebuild",
     "test": "node test/test.js"
   },
-  "engines": { "node" : ">=0.10.0" },
-  "keywords": [ "hash", "xxhash", "fast", "streaming" ],
-  "licenses": [ { "type": "MIT", "url": "https://raw.github.com/mscdex/node-xxhash/master/LICENSE" } ],
-  "repository": { "type": "git", "url": "https://github.com/mscdex/node-xxhash.git" }
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "keywords": [
+    "hash",
+    "xxhash",
+    "fast",
+    "streaming"
+  ],
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://raw.github.com/mscdex/node-xxhash/master/LICENSE"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mscdex/node-xxhash.git"
+  }
 }

@@ -14,6 +14,21 @@
         'src/common.hpp'
       ],
       'cflags': [ '-O2' ],
+      'conditions': [
+        [
+          'OS=="mac"',
+          {
+            "xcode_settings": {
+              "OTHER_CPLUSPLUSFLAGS": [
+                "-stdlib=libc++"
+              ],
+              "OTHER_LDFLAGS": [
+                "-stdlib=libc++"
+              ]
+            },
+          }
+        ],
+      ],
     },
   ],
 }
