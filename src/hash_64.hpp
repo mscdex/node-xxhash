@@ -5,9 +5,7 @@
 
 using namespace v8;
 
-Nan::Persistent<FunctionTemplate> constructor_64;
-
-class Hash64 : public node::ObjectWrap {
+class Hash64 : public Nan::ObjectWrap {
   public:
     XXH64_state_t state;
 
@@ -60,7 +58,7 @@ class Hash64 : public node::ObjectWrap {
 
     static uint64_t convert_seed(Local<Value> seed_val, bool &did_throw) {
       if (seed_val->IsUint32()) {
-        return seed_val->Uint32Value();
+        return Nan::To<uint32_t>(seed_val).FromJust();
       } else if (node::Buffer::HasInstance(seed_val)) {
         char* seed_buf = node::Buffer::Data(seed_val);
         size_t seed_buf_len = node::Buffer::Length(seed_val);
@@ -160,9 +158,13 @@ class Hash64 : public node::ObjectWrap {
       else
         info.GetReturnValue().Set(convert_result(result, node::BUFFER));
     }
+	
+	static inline Nan::Persistent<v8::Function> & constructor() {
+      static Nan::Persistent<v8::Function> construct;
+      return construct;
+    }
 
-
-    static void Initialize(Handle<Object> target) {
+    static NAN_MODULE_INIT(Init) {
       Local<String> name = Nan::New<String>("XXHash64").ToLocalChecked();
       Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
 
@@ -173,9 +175,9 @@ class Hash64 : public node::ObjectWrap {
       Nan::SetPrototypeMethod(tpl, "digest", Digest);
 
       Nan::SetMethod(tpl, "hash", StaticHash);
-      target->Set(name, tpl->GetFunction());
+      Nan::Set(target, name, Nan::GetFunction(tpl).ToLocalChecked());
 
-      constructor_64.Reset(tpl);
+      constructor().Reset(Nan::GetFunction(tpl).ToLocalChecked());
     }
 };
 

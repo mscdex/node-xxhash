@@ -1,13 +1,11 @@
-#include <node.h>
+#include <nan.h>
 
 #include "hash_32.hpp"
 #include "hash_64.hpp"
 
-extern "C" {
-  void Init(v8::Handle<v8::Object> target) {
-    Hash32::Initialize(target);
-    Hash64::Initialize(target);
-  }
-
-  NODE_MODULE(hash, Init);
+NAN_MODULE_INIT(Init) {
+    Hash32::Init(target);
+    Hash64::Init(target);
 }
+
+NODE_MODULE(addon, Init)
