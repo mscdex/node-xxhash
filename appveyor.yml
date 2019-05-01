@@ -1,35 +1,45 @@
-# http://www.appveyor.com/docs/appveyor-yml
-
-# Test against these versions of Node.js.
 environment:
+  # https://github.com/jasongin/nvs/blob/master/doc/CI.md
+  NVS_VERSION: 1.4.2
+  fast_finish: true
   matrix:
-    - nodejs_version: "0.10"
-    - nodejs_version: "0.12"
-    - nodejs_version: "4"
-    - nodejs_version: "6"
-    - nodejs_version: "7"
-    - nodejs_version: "8"
+    - NODEJS_VERSION: node/4
+    - NODEJS_VERSION: node/6
+    - NODEJS_VERSION: node/8
+    - NODEJS_VERSION: node/9
+    - NODEJS_VERSION: node/10
+    - NODEJS_VERSION: node/12
+    - NODEJS_VERSION: nightly
 
-# Install scripts. (runs after repo cloning)
+matrix:
+  fast_finish: true
+  allow_failures:
+    - NODEJS_VERSION: nightly
+
+platform:
+  - x86
+  - x64
+
 install:
-  # Get the latest stable version of Node
-  - ps: Install-Product node $env:nodejs_version
-  # Typical npm stuff.
-  - IF %nodejs_version% LSS 1 npm -g install npm@1.4.4
-  - IF %nodejs_version% LSS 1 set PATH=%APPDATA%\npm;%PATH%
-  - set CL=-DDELAYIMP_INSECURE_WRITABLE_HOOKS
+  # nvs
+  - git clone --branch v%NVS_VERSION% --depth 1 https://github.com/jasongin/nvs %LOCALAPPDATA%\nvs
+  - set PATH=%LOCALAPPDATA%\nvs;%PATH%
+  - nvs --version
+  # node.js
+  - nvs add %NODEJS_VERSION%/%PLATFORM%
+  - nvs use %NODEJS_VERSION%/%PLATFORM%
+  - node --version
+  - node -p process.arch
+  - npm --version
+  # app
   - npm install
 
-# Post-install test scripts.
 test_script:
-  # Output useful info for debugging.
-  - node --version
-  - npm --version
-  # run tests
   - npm test
 
-# Don't actually build.
 build: off
 
-# Set build version format here instead of in the admin panel.
 version: "{build}"
+
+cache:
+  - node_modules
