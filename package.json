@@ -4,13 +4,13 @@
   "description": "An xxhash binding for node.js",
   "main": "./lib/xxhash",
   "dependencies": {
-    "nan": "^2.4.0"
+    "nan": "^2.13.2"
   },
   "scripts": {
     "install": "node-gyp rebuild",
     "test": "node test/test.js"
   },
-  "engines": { "node" : ">=0.10.0" },
+  "engines": { "node" : ">=4.0.0" },
   "keywords": [ "hash", "xxhash", "fast", "streaming" ],
   "licenses": [ { "type": "MIT", "url": "https://raw.github.com/mscdex/node-xxhash/master/LICENSE" } ],
   "repository": { "type": "git", "url": "https://github.com/mscdex/node-xxhash.git" }

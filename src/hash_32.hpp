@@ -5,9 +5,7 @@
 
 using namespace v8;
 
-Nan::Persistent<FunctionTemplate> constructor_32;
-
-class Hash32 : public node::ObjectWrap {
+class Hash32 : public Nan::ObjectWrap {
   public:
     XXH32_state_t state;
 
@@ -63,7 +61,7 @@ class Hash32 : public node::ObjectWrap {
 
     static uint32_t convert_seed(Local<Value> seed_val, bool &did_throw) {
       if (seed_val->IsUint32()) {
-        return seed_val->Uint32Value();
+        return Nan::To<uint32_t>(seed_val).FromJust();
       } else if (node::Buffer::HasInstance(seed_val)) {
         char* seed_buf = node::Buffer::Data(seed_val);
         if (node::Buffer::Length(seed_val) == 4) {
@@ -146,9 +144,8 @@ class Hash32 : public node::ObjectWrap {
       else
         info.GetReturnValue().Set(Nan::New<Integer>(result));
     }
-
-
-    static void Initialize(Handle<Object> target) {
+    
+    static NAN_MODULE_INIT(Init) {
       Local<String> name = Nan::New<String>("XXHash32").ToLocalChecked();
       Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(New);
 
@@ -158,9 +155,7 @@ class Hash32 : public node::ObjectWrap {
       Nan::SetPrototypeMethod(tpl, "update", Update);
       Nan::SetPrototypeMethod(tpl, "digest", Digest);
       Nan::SetMethod(tpl, "hash", StaticHash);
-      target->Set(name, tpl->GetFunction());
-
-      constructor_32.Reset(tpl);
+      Nan::Set(target, name, Nan::GetFunction(tpl).ToLocalChecked());
     }
 };
 
