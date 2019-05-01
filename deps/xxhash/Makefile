@@ -25,15 +25,27 @@
 # ################################################################
 
 # Version numbers
-LIBVER_MAJOR:=`sed -n '/define XXH_VERSION_MAJOR/s/.*[[:blank:]]\([0-9][0-9]*\).*/\1/p' < xxhash.h`
-LIBVER_MINOR:=`sed -n '/define XXH_VERSION_MINOR/s/.*[[:blank:]]\([0-9][0-9]*\).*/\1/p' < xxhash.h`
-LIBVER_PATCH:=`sed -n '/define XXH_VERSION_RELEASE/s/.*[[:blank:]]\([0-9][0-9]*\).*/\1/p' < xxhash.h`
+LIBVER_MAJOR_SCRIPT:=`sed -n '/define XXH_VERSION_MAJOR/s/.*[[:blank:]]\([0-9][0-9]*\).*/\1/p' < xxhash.h`
+LIBVER_MINOR_SCRIPT:=`sed -n '/define XXH_VERSION_MINOR/s/.*[[:blank:]]\([0-9][0-9]*\).*/\1/p' < xxhash.h`
+LIBVER_PATCH_SCRIPT:=`sed -n '/define XXH_VERSION_RELEASE/s/.*[[:blank:]]\([0-9][0-9]*\).*/\1/p' < xxhash.h`
+LIBVER_MAJOR := $(shell echo $(LIBVER_MAJOR_SCRIPT))
+LIBVER_MINOR := $(shell echo $(LIBVER_MINOR_SCRIPT))
+LIBVER_PATCH := $(shell echo $(LIBVER_PATCH_SCRIPT))
 LIBVER := $(LIBVER_MAJOR).$(LIBVER_MINOR).$(LIBVER_PATCH)
 
-CFLAGS ?= -O3
+# SSE4 detection
+HAVE_SSE4 := $(shell $(CC) -dM -E - < /dev/null | grep "SSE4" > /dev/null && echo 1 || echo 0)
+ifeq ($(HAVE_SSE4), 1)
+NOSSE4 := -mno-sse4
+else
+NOSSE4 :=
+endif
+
+CFLAGS ?= -O2 $(NOSSE4)   # disables potential auto-vectorization
 CFLAGS += -Wall -Wextra -Wcast-qual -Wcast-align -Wshadow \
           -Wstrict-aliasing=1 -Wswitch-enum -Wdeclaration-after-statement \
-		  -Wstrict-prototypes -Wundef
+          -Wstrict-prototypes -Wundef
+
 FLAGS   = $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) $(MOREFLAGS)
 XXHSUM_VERSION=$(LIBVER)
 MD2ROFF = ronn
@@ -46,27 +58,73 @@ else
 EXT =
 endif
 
+# OS X linker doesn't support -soname, and use different extension
+# see : https://developer.apple.com/library/mac/documentation/DeveloperTools/Conceptual/DynamicLibraries/100-Articles/DynamicLibraryDesignGuidelines.html
+ifeq ($(shell uname), Darwin)
+	SHARED_EXT = dylib
+	SHARED_EXT_MAJOR = $(LIBVER_MAJOR).$(SHARED_EXT)
+	SHARED_EXT_VER = $(LIBVER).$(SHARED_EXT)
+	SONAME_FLAGS = -install_name $(LIBDIR)/libxxhash.$(SHARED_EXT_MAJOR) -compatibility_version $(LIBVER_MAJOR) -current_version $(LIBVER)
+else
+	SONAME_FLAGS = -Wl,-soname=libxxhash.$(SHARED_EXT).$(LIBVER_MAJOR)
+	SHARED_EXT = so
+	SHARED_EXT_MAJOR = $(SHARED_EXT).$(LIBVER_MAJOR)
+	SHARED_EXT_VER = $(SHARED_EXT).$(LIBVER)
+endif
+
+LIBXXH = libxxhash.$(SHARED_EXT_VER)
+
+
 .PHONY: default
-default: xxhsum
+default: lib xxhsum_and_links
 
 .PHONY: all
-all: xxhsum xxhsum32 xxhsum_inlinedXXH
+all: lib xxhsum xxhsum_inlinedXXH
 
 xxhsum32: CFLAGS += -m32
 xxhsum xxhsum32: xxhash.c xxhsum.c
-	$(CC)      $(FLAGS) $^ -o $@$(EXT)
-	ln -sf $@ xxh32sum
-	ln -sf $@ xxh64sum
+	$(CC) $(FLAGS) $^ -o $@$(EXT)
+
+.PHONY: xxhsum_and_links
+xxhsum_and_links: xxhsum
+	ln -sf xxhsum xxh32sum
+	ln -sf xxhsum xxh64sum
 
 xxhsum_inlinedXXH: xxhsum.c
 	$(CC) $(FLAGS) -DXXH_PRIVATE_API $^ -o $@$(EXT)
 
-.PHONY: test
-test: xxhsum
+
+# library
+
+libxxhash.a: ARFLAGS = rcs
+libxxhash.a: xxhash.o
+	@echo compiling static library
+	@$(AR) $(ARFLAGS) $@ $^
+
+$(LIBXXH): LDFLAGS += -shared
+ifeq (,$(filter Windows%,$(OS)))
+$(LIBXXH): LDFLAGS += -fPIC
+endif
+$(LIBXXH): xxhash.c
+	@echo compiling dynamic library $(LIBVER)
+	@$(CC) $(FLAGS) $^ $(LDFLAGS) $(SONAME_FLAGS) -o $@
+	@echo creating versioned links
+	@ln -sf $@ libxxhash.$(SHARED_EXT_MAJOR)
+	@ln -sf $@ libxxhash.$(SHARED_EXT)
+
+libxxhash : $(LIBXXH)
+
+lib: libxxhash.a libxxhash
+
+
+# tests
+
+.PHONY: check
+check: xxhsum
 	# stdin
 	./xxhsum < xxhash.c
 	# multiple files
-	./xxhsum *
+	./xxhsum xxhash.* xxhsum.*
 	# internal bench
 	./xxhsum -bi1
 	# file bench
@@ -76,21 +134,21 @@ test: xxhsum
 test-mem: xxhsum
 	# memory tests
 	valgrind --leak-check=yes --error-exitcode=1 ./xxhsum -bi1 xxhash.c
-	valgrind --leak-check=yes --error-exitcode=1 ./xxhsum -H0 xxhash.c
-	valgrind --leak-check=yes --error-exitcode=1 ./xxhsum -H1 xxhash.c
+	valgrind --leak-check=yes --error-exitcode=1 ./xxhsum -H0  xxhash.c
+	valgrind --leak-check=yes --error-exitcode=1 ./xxhsum -H1  xxhash.c
 
 .PHONY: test32
 test32: clean xxhsum32
-	@echo ---- test 32-bits ----
+	@echo ---- test 32-bit ----
 	./xxhsum32 -bi1 xxhash.c
 
 test-xxhsum-c: xxhsum
 	# xxhsum to/from pipe
-	./xxhsum * | ./xxhsum -c -
-	./xxhsum -H0 * | ./xxhsum -c -
+	./xxhsum lib* | ./xxhsum -c -
+	./xxhsum -H0 lib* | ./xxhsum -c -
 	# xxhsum to/from file, shell redirection
-	./xxhsum * > .test.xxh64
-	./xxhsum -H0 * > .test.xxh32
+	./xxhsum lib* > .test.xxh64
+	./xxhsum -H0 lib* > .test.xxh32
 	./xxhsum -c .test.xxh64
 	./xxhsum -c .test.xxh32
 	./xxhsum -c < .test.xxh64
@@ -104,8 +162,6 @@ test-xxhsum-c: xxhsum
 	# Expects "FAILED open or read"
 	echo "0000000000000000  test-expects-file-not-found" | ./xxhsum -c -; test $$? -eq 1
 	echo "00000000  test-expects-file-not-found" | ./xxhsum -c -; test $$? -eq 1
-
-clean-xxhsum-c:
 	@$(RM) -f .test.xxh32 .test.xxh64
 
 armtest: clean
@@ -125,9 +181,10 @@ c90test: clean
 	$(CC) -std=c90 -Werror -pedantic -DXXH_NO_LONG_LONG -c xxhash.c
 	$(RM) xxhash.o
 
+usan: CC=clang
 usan: clean
 	@echo ---- check undefined behavior - sanitize ----
-	$(MAKE) clean test CC=clang MOREFLAGS="-g -fsanitize=undefined"
+	$(MAKE) clean test CC=$(CC) MOREFLAGS="-g -fsanitize=undefined -fno-sanitize-recover=all"
 
 staticAnalyze: clean
 	@echo ---- static analyzer - scan-build ----
@@ -150,11 +207,23 @@ clean-man:
 preview-man: clean-man man
 	man ./xxhsum.1
 
-test-all: clean all namespaceTest test test32 test-xxhsum-c clean-xxhsum-c \
-	armtest clangtest gpptest c90test test-mem usan staticAnalyze
+test: all namespaceTest check test-xxhsum-c c90test
 
-clean: clean-xxhsum-c
-	@$(RM) -f core *.o xxhsum$(EXT) xxhsum32$(EXT) xxhsum_inlinedXXH$(EXT) xxh32sum xxh64sum
+test-all: test test32 armtest clangtest gpptest usan listL120 trailingWhitespace staticAnalyze
+
+.PHONY: listL120
+listL120:  # extract lines >= 120 characters in *.{c,h}, by Takayuki Matsuoka (note : $$, for Makefile compatibility)
+	find . -type f -name '*.c' -o -name '*.h' | while read -r filename; do awk 'length > 120 {print FILENAME "(" FNR "): " $$0}' $$filename; done
+
+.PHONY: trailingWhitespace
+trailingWhitespace:
+	! grep -E "`printf '[ \\t]$$'`" *.1 *.c *.h LICENSE Makefile cmake_unofficial/CMakeLists.txt
+
+.PHONY: clean
+clean:
+	@$(RM) -r *.dSYM   # Mac OS-X specific
+	@$(RM) core *.o libxxhash.*
+	@$(RM) xxhsum$(EXT) xxhsum32$(EXT) xxhsum_inlinedXXH$(EXT) xxh32sum xxh64sum
 	@echo cleaning completed
 
 
@@ -163,6 +232,10 @@ clean: clean-xxhsum-c
 #-----------------------------------------------------------------------------
 ifneq (,$(filter $(shell uname),Linux Darwin GNU/kFreeBSD GNU OpenBSD FreeBSD NetBSD DragonFly SunOS))
 
+.PHONY: list
+list:
+	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# File/,/^# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$' | xargs
+
 DESTDIR     ?=
 # directory variables : GNU conventions prefer lowercase
 # see https://www.gnu.org/prep/standards/html_node/Makefile-Conventions.html
@@ -170,6 +243,10 @@ DESTDIR     ?=
 prefix      ?= /usr/local
 PREFIX      ?= $(prefix)
 exec_prefix ?= $(PREFIX)
+libdir      ?= $(exec_prefix)/lib
+LIBDIR      ?= $(libdir)
+includedir  ?= $(PREFIX)/include
+INCLUDEDIR  ?= $(includedir)
 bindir      ?= $(exec_prefix)/bin
 BINDIR      ?= $(bindir)
 datarootdir ?= $(PREFIX)/share
@@ -193,8 +270,16 @@ INSTALL_DATA    ?= $(INSTALL) -m 644
 
 
 .PHONY: install
-install: xxhsum
-	@echo Installing binaries
+install: lib xxhsum
+	@echo Installing libxxhash
+	@$(INSTALL) -d -m 755 $(DESTDIR)$(LIBDIR)
+	@$(INSTALL_DATA) libxxhash.a $(DESTDIR)$(LIBDIR)
+	@$(INSTALL_PROGRAM) $(LIBXXH) $(DESTDIR)$(LIBDIR)
+	@ln -sf $(LIBXXH) $(DESTDIR)$(LIBDIR)/libxxhash.$(SHARED_EXT_MAJOR)
+	@ln -sf $(LIBXXH) $(DESTDIR)$(LIBDIR)/libxxhash.$(SHARED_EXT)
+	@$(INSTALL) -d -m 755 $(DESTDIR)$(INCLUDEDIR)   # includes
+	@$(INSTALL_DATA) xxhash.h $(DESTDIR)$(INCLUDEDIR)
+	@echo Installing xxhsum
 	@$(INSTALL) -d -m 755 $(DESTDIR)$(BINDIR)/ $(DESTDIR)$(MANDIR)/
 	@$(INSTALL_PROGRAM) xxhsum $(DESTDIR)$(BINDIR)/xxhsum
 	@ln -sf xxhsum $(DESTDIR)$(BINDIR)/xxh32sum
@@ -203,16 +288,21 @@ install: xxhsum
 	@$(INSTALL_DATA) xxhsum.1 $(DESTDIR)$(MANDIR)/xxhsum.1
 	@ln -sf xxhsum.1 $(DESTDIR)$(MANDIR)/xxh32sum.1
 	@ln -sf xxhsum.1 $(DESTDIR)$(MANDIR)/xxh64sum.1
-	@echo xxhsum installation completed
+	@echo xxhash installation completed
 
 .PHONY: uninstall
 uninstall:
-	$(RM) $(DESTDIR)$(BINDIR)/xxh32sum
-	$(RM) $(DESTDIR)$(BINDIR)/xxh64sum
-	$(RM) $(DESTDIR)$(BINDIR)/xxhsum
-	$(RM) $(DESTDIR)$(MANDIR)/xxh32sum.1
-	$(RM) $(DESTDIR)$(MANDIR)/xxh64sum.1
-	$(RM) $(DESTDIR)$(MANDIR)/xxhsum.1
+	@$(RM) $(DESTDIR)$(LIBDIR)/libxxhash.a
+	@$(RM) $(DESTDIR)$(LIBDIR)/libxxhash.$(SHARED_EXT)
+	@$(RM) $(DESTDIR)$(LIBDIR)/libxxhash.$(SHARED_EXT_MAJOR)
+	@$(RM) $(DESTDIR)$(LIBDIR)/$(LIBXXH)
+	@$(RM) $(DESTDIR)$(INCLUDEDIR)/xxhash.h
+	@$(RM) $(DESTDIR)$(BINDIR)/xxh32sum
+	@$(RM) $(DESTDIR)$(BINDIR)/xxh64sum
+	@$(RM) $(DESTDIR)$(BINDIR)/xxhsum
+	@$(RM) $(DESTDIR)$(MANDIR)/xxh32sum.1
+	@$(RM) $(DESTDIR)$(MANDIR)/xxh64sum.1
+	@$(RM) $(DESTDIR)$(MANDIR)/xxhsum.1
 	@echo xxhsum successfully uninstalled
 
 endif
