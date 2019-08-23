@@ -11,7 +11,7 @@ An [xxhash](https://github.com/Cyan4973/xxHash) binding for [node.js](http://nod
 Requirements
 ============
 
-* [node.js](http://nodejs.org/) -- v0.10.0 or newer
+* [node.js](http://nodejs.org/) -- v4.0.0 or newer
 
 
 Install
@@ -26,18 +26,18 @@ Examples
 * Hash a file in one step:
 
 ```javascript
-var XXHash = require('xxhash'),
-    fs = require('fs');
+var XXHash = require('xxhash');
+var fs = require('fs');
 
-var file = fs.readFileSync('somefile'),
-    result = XXHash.hash(file, 0xCAFEBABE);
+var file = fs.readFileSync('somefile');
+var result = XXHash.hash(file, 0xCAFEBABE);
 ```
 
 * Hash a file in multiple steps:
 
 ```javascript
-var XXHash = require('xxhash'),
-    fs = require('fs');
+var XXHash = require('xxhash');
+var fs = require('fs');
 
 var hasher = new XXHash(0xCAFEBABE);
 
@@ -53,8 +53,8 @@ fs.createReadStream('somefile')
 * Hash a file with a hash stream:
 
 ```javascript
-var HashStream = require('xxhash').Stream,
-    fs = require('fs');
+var HashStream = require('xxhash').Stream;
+var fs = require('fs');
 
 var hasher = new HashStream(0xCAFEBABE);
 
