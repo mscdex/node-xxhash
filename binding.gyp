@@ -2,6 +2,9 @@
   'targets': [
     {
       'target_name': 'hash',
+      'defines': [
+        '__USE_XOPEN2K8'
+      ],
       'include_dirs': [
         'deps/xxhash',
         'src',
