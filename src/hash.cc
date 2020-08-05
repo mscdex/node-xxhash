@@ -8,4 +8,4 @@ NAN_MODULE_INIT(Init) {
     Hash64::Init(target);
 }
 
-NODE_MODULE(addon, Init)
+NAN_MODULE_WORKER_ENABLED(addon, Init)
